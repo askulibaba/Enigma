@@ -328,7 +328,9 @@ class TelegramClient {
 
         this.session.setAuthKey(this._sender.authKey);
         await this._sender.send(this._initWith(
-            new Api.help.GetConfig(),
+            new Api.help.GetConfig({
+                tmpSessions: 100,
+            }),
         ));
 
         if (!this._loopStarted) {
@@ -1228,7 +1230,9 @@ class TelegramClient {
 
     async loadConfig() {
         if (!this._config) {
-            this._config = await this.invoke(new Api.help.GetConfig());
+            this._config = await this.invoke(new Api.help.GetConfig({
+                tmpSessions: 100,
+            }));
         }
     }
 
