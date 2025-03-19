@@ -205,8 +205,8 @@ export default function createConfig(
         APP_NAME: null,
         APP_TITLE,
         RELEASE_DATETIME: Date.now(),
-        TELEGRAM_API_ID: '1',
-        TELEGRAM_API_HASH: 'abcdef1234567890abcdef1234567890',
+        TELEGRAM_API_ID: '26169639',
+        TELEGRAM_API_HASH: '64336d264de33f072a49c5a98c292d12',
         // eslint-disable-next-line no-null/no-null
         TEST_SESSION: null,
         IS_PACKAGED_ELECTRON: false,
