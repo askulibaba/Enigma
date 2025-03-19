@@ -51,5 +51,10 @@
       "src": "^/(.*)",
       "dest": "/index.html"
     }
-  ]
+  ],
+  "env": {
+    "TELEGRAM_API_ID": "1",
+    "TELEGRAM_API_HASH": "abcdef1234567890abcdef1234567890",
+    "BASE_URL": "https://telegram-web-app.vercel.app"
+  }
 } 
