@@ -32,7 +32,9 @@
     "test:record": "playwright codegen localhost:1235",
     "statoscope:validate-diff": "statoscope validate --input input.json --reference reference.json",
     "postinstall": "(cd dev/eslint-multitab && npm i)",
-    "postversion": "echo $(node -p \"require('./package.json').version\") > public/version.txt && git commit --amend --no-verify --no-edit public/version.txt"
+    "postversion": "echo $(node -p \"require('./package.json').version\") > public/version.txt && git commit --amend --no-verify --no-edit public/version.txt",
+    "build": "npm run build:production",
+    "vercel-build": "npm run build:production"
   },
   "engines": {
     "node": "^20 || ^22",
