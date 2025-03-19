@@ -1,0 +1,55 @@
+{
+  "version": 2,
+  "public": true,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "^/js/(.*)",
+      "dest": "/js/$1"
+    },
+    {
+      "src": "^/css/(.*)",
+      "dest": "/css/$1"
+    },
+    {
+      "src": "^/img/(.*)",
+      "dest": "/img/$1"
+    },
+    {
+      "src": "^/(.*\\.(js|css|svg|png|jpg|jpeg|gif|ico|json|wasm|mp3|mp4|webm|woff|woff2|ttf|eot))$",
+      "dest": "/$1"
+    },
+    {
+      "src": "^/(img-apple-64|img-apple-160)/(.*)",
+      "dest": "/$1/$2"
+    },
+    {
+      "src": "^/favicon.ico",
+      "dest": "/favicon.ico"
+    },
+    {
+      "src": "^/manifest.json",
+      "dest": "/manifest.json"
+    },
+    {
+      "src": "^/site.webmanifest",
+      "dest": "/site.webmanifest"
+    },
+    {
+      "src": "^/apple-touch-icon.png",
+      "dest": "/apple-touch-icon.png"
+    },
+    {
+      "src": "^/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+} 
