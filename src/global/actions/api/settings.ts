@@ -821,3 +821,89 @@ addActionHandler('sortChatUsernames', async (global, actions, payload): Promise<
     setGlobal(global);
   }
 });
+
+export function setSettingOption(options: Partial<{
+  byKey: boolean;
+  theme: Theme;
+  shouldUseSystemTheme: boolean;
+  customBackground?: string;
+  animation: AnimationLevel;
+  messageTextSize: number;
+  nightTheme: Theme;
+  dayTheme: Theme;
+  language: ApiLanguage;
+  wasPhoneRegistered: boolean;
+  isSensitiveEnabled: boolean;
+  canAutoLoadPhotoFromContacts: boolean;
+  canAutoLoadPhotoInPrivateChats: boolean;
+  canAutoLoadPhotoInGroups: boolean;
+  canAutoLoadPhotoInChannels: boolean;
+  canAutoLoadVideoFromContacts: boolean;
+  canAutoLoadVideoInPrivateChats: boolean;
+  canAutoLoadVideoInGroups: boolean;
+  canAutoLoadVideoInChannels: boolean;
+  canAutoLoadFileFromContacts: boolean;
+  canAutoLoadFileInPrivateChats: boolean;
+  canAutoLoadFileInGroups: boolean;
+  canAutoLoadFileInChannels: boolean;
+  autoLoadFileMaxSizeMb: number;
+  hasPassword?: boolean;
+  nextTopicId?: number;
+  shouldNotifyAboutBots?: boolean;
+  shouldNotifyAboutPinned?: boolean;
+  shouldSuggestStickers?: boolean;
+  shouldSuggestCustomEmoji?: boolean;
+  shouldLoopStickers?: boolean;
+  shouldAllowScreenshots?: boolean;
+  hasWebNotifications?: boolean;
+  hasPushNotifications?: boolean;
+  notificationSoundVolume?: number;
+  canPlaySounds?: boolean;
+  canDisplayChatInTitle?: boolean;
+  shouldAutoDownloadMediaFromContacts?: boolean;
+  shouldAutoDownloadMediaInPrivateChats?: boolean;
+  shouldAutoDownloadMediaInGroups?: boolean;
+  shouldAutoDownloadMediaInChannels?: boolean;
+  shouldSendByEnter?: boolean;
+  shouldSuggestSupperGroups?: boolean;
+  shouldCompress?: boolean;
+  shouldShowGreetingMessage?: boolean;
+  shouldRequestHttpPassword?: boolean;
+  canAutoPlayGifs?: boolean;
+  canAutoPlayVideos?: boolean;
+  shouldUseSystemDataSaver?: boolean;
+  shouldUseProxy?: boolean;
+  hundredFilterVariables?: HundredFilterVariables;
+  hundredFilterUrl?: string;
+  enigmaEnabled?: boolean;
+  enigmaKey?: string;
+}>) {
+  const global = getGlobal();
+  if ('enigmaEnabled' in options) {
+    setGlobal({
+      ...global,
+      settings: {
+        ...global.settings,
+        privacy: {
+          ...global.settings.privacy,
+          enigmaEnabled: options.enigmaEnabled,
+        },
+      },
+    });
+  }
+  
+  if ('enigmaKey' in options) {
+    setGlobal({
+      ...global,
+      settings: {
+        ...global.settings,
+        privacy: {
+          ...global.settings.privacy,
+          enigmaKey: options.enigmaKey,
+        },
+      },
+    });
+  }
+  
+  // ... existing code ...
+}

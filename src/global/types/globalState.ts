@@ -461,3 +461,58 @@ export type TabArgs<T> = T extends RequiredGlobalState ? [
 ] : [
   tabId?: number | undefined,
 ];
+
+export interface ISettings extends GlobalState['settings'] {
+  theme: ThemeKey;
+  shouldUseSystemTheme: boolean;
+  messageTextSize: number;
+  animationLevel: AnimationLevel;
+  messageSendKeyCombo: 'enter' | 'ctrl-enter';
+  canAutoLoadPhotoFromContacts: boolean;
+  canAutoLoadPhotoInPrivateChats: boolean;
+  canAutoLoadPhotoInGroups: boolean;
+  canAutoLoadPhotoInChannels: boolean;
+  canAutoLoadVideoFromContacts: boolean;
+  canAutoLoadVideoInPrivateChats: boolean;
+  canAutoLoadVideoInGroups: boolean;
+  canAutoLoadVideoInChannels: boolean;
+  canAutoLoadFileFromContacts: boolean;
+  canAutoLoadFileInPrivateChats: boolean;
+  canAutoLoadFileInGroups: boolean;
+  canAutoLoadFileInChannels: boolean;
+  autoLoadFileMaxSizeMb: number;
+  hasPrivateChatsNotifications: boolean;
+  hasPrivateChatsMessagePreview: boolean;
+  hasGroupNotifications: boolean;
+  hasGroupMessagePreview: boolean;
+  hasBroadcastNotifications: boolean;
+  hasBroadcastMessagePreview: boolean;
+  hasContactJoinedNotifications: boolean;
+  hasWebNotifications: boolean;
+  hasPushNotifications: boolean;
+  notificationSoundVolume: number;
+  canPlayContactSounds: boolean;
+  language: LangCode;
+  languagePackIds?: string[];
+  isSensitiveEnabled: boolean;
+  canChangeSensitive: boolean;
+  timeFormat: TimeFormat;
+  wasTimeFormatSetManually: boolean;
+  isConnectionStatusShown: boolean;
+  shouldArchiveAndMuteNewNonContact?: boolean;
+  shouldSuggestStickers?: boolean;
+  shouldSuggestCustomEmoji?: boolean;
+  shouldLoopStickers?: boolean;
+  hasSeenToneTooltip?: boolean;
+  generationState?: SharedMediaType;
+  shouldCollectDebugLogs?: boolean;
+  shouldDebugExportedSenders?: boolean;
+  maxUneditableReactions?: number;
+  shouldShowScheduledAsMissedCall?: boolean;
+  isTonLinkPreviewDisabled?: boolean;
+  shouldUpdateStickerSetOrder?: boolean;
+  autoDownloadEnabled?: boolean;
+  // Enigma encryption settings
+  enigmaEnabled?: boolean;
+  enigmaKey?: string;
+}

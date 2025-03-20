@@ -37,6 +37,7 @@ import SettingsPrivacyVisibilityExceptionList from './SettingsPrivacyVisibilityE
 import SettingsQuickReaction from './SettingsQuickReaction';
 import SettingsStickers from './SettingsStickers';
 import SettingsTwoFa from './twoFa/SettingsTwoFa';
+import SettingsEnigma from './SettingsEnigma';
 
 import './Settings.scss';
 
@@ -480,6 +481,14 @@ const Settings: FC<OwnProps> = ({
           />
         );
 
+      case SettingsScreens.Enigma:
+        return (
+          <SettingsEnigma
+            enigmaEnabled={getGlobal().settings.privacy?.enigmaEnabled}
+            enigmaKey={getGlobal().settings.privacy?.enigmaKey}
+          />
+        );
+
       default:
         return undefined;
     }
@@ -519,3 +528,14 @@ const Settings: FC<OwnProps> = ({
 };
 
 export default memo(Settings);
+
+export function renderEnigma(global: GlobalState): TeactNode {
+  const { settings } = global;
+  
+  return (
+    <SettingsEnigma
+      enigmaEnabled={settings.privacy?.enigmaEnabled}
+      enigmaKey={settings.privacy?.enigmaKey}
+    />
+  );
+}

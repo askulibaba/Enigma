@@ -1,0 +1,37 @@
+.SettingsEnigma {
+  .settings-content-icon {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem;
+    
+    i {
+      font-size: 3rem;
+      color: var(--color-primary);
+    }
+  }
+  
+  .text-muted {
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+  }
+  
+  .mb-2 {
+    margin-bottom: 0.5rem;
+  }
+  
+  .mb-3 {
+    margin-bottom: 1rem;
+  }
+  
+  .settings-item-header {
+    font-weight: 500;
+    font-size: 1rem;
+    color: var(--color-text);
+  }
+  
+  .settings-item-description {
+    color: var(--color-text-secondary);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+} 

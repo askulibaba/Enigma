@@ -1,5 +1,5 @@
 import type { FC } from '../../../lib/teact/teact';
-import React, { memo, useCallback, useEffect } from '../../../lib/teact/teact';
+import React, { memo, useCallback, useEffect, useRef } from '../../../lib/teact/teact';
 import { getActions, withGlobal } from '../../../global';
 
 import type { ApiPrivacySettings } from '../../../api/types';
@@ -11,10 +11,16 @@ import { selectCanSetPasscode, selectIsCurrentUserPremium } from '../../../globa
 import useHistoryBack from '../../../hooks/useHistoryBack';
 import useLang from '../../../hooks/useLang';
 import useOldLang from '../../../hooks/useOldLang';
+import { getEnigmaUtils } from '../../../util/enigmaUtils';
 
 import StarIcon from '../../common/icons/StarIcon';
 import Checkbox from '../../ui/Checkbox';
 import ListItem from '../../ui/ListItem';
+import Switcher from '../../ui/Switcher';
+import Button from '../../ui/Button';
+
+import { CHAT_HEIGHT_PX } from '../../../config';
+import { ApiPrivacyKey } from '../../../global/types';
 
 type OwnProps = {
   isActive?: boolean;
@@ -36,6 +42,7 @@ type StateProps = {
   shouldNewNonContactPeersRequirePremium?: boolean;
   canDisplayChatInTitle?: boolean;
   privacy: GlobalState['settings']['privacy'];
+  enigmaEnabled?: boolean;
 };
 
 const SettingsPrivacy: FC<OwnProps & StateProps> = ({
@@ -53,6 +60,7 @@ const SettingsPrivacy: FC<OwnProps & StateProps> = ({
   canDisplayChatInTitle,
   canSetPasscode,
   privacy,
+  enigmaEnabled,
   onScreenSelect,
   onReset,
 }) => {
@@ -65,6 +73,11 @@ const SettingsPrivacy: FC<OwnProps & StateProps> = ({
     updateGlobalPrivacySettings,
     loadWebAuthorizations,
     setSettingOption,
+    toggleEnigmaEnabled,
+    showNotification,
+    clearWebAuthorizations,
+    loadBlockedContacts,
+    loadPasswordInfo,
   } = getActions();
 
   useEffect(() => {
@@ -77,8 +90,10 @@ const SettingsPrivacy: FC<OwnProps & StateProps> = ({
   useEffect(() => {
     if (isActive) {
       loadGlobalPrivacySettings();
+      loadBlockedContacts();
+      loadPasswordInfo();
     }
-  }, [isActive, loadGlobalPrivacySettings]);
+  }, [isActive, loadGlobalPrivacySettings, loadBlockedContacts, loadPasswordInfo]);
 
   const oldLang = useOldLang();
   const lang = useLang();
@@ -87,6 +102,9 @@ const SettingsPrivacy: FC<OwnProps & StateProps> = ({
     isActive,
     onBack: onReset,
   });
+
+  const enigmaUtils = getEnigmaUtils();
+  const isEnigmaEnabled = enigmaUtils.isEnigmaEnabled();
 
   const handleArchiveAndMuteChange = useCallback((isEnabled: boolean) => {
     updateGlobalPrivacySettings({
@@ -103,6 +121,15 @@ const SettingsPrivacy: FC<OwnProps & StateProps> = ({
   const handleUpdateContentSettings = useCallback((isChecked: boolean) => {
     updateContentSettings(isChecked);
   }, [updateContentSettings]);
+
+  const handleEnigmaToggle = useCallback(() => {
+    toggleEnigmaEnabled({ enabled: !enigmaEnabled });
+    showNotification({ message: enigmaEnabled ? 'Enigma encryption disabled' : 'Enigma encryption enabled' });
+  }, [toggleEnigmaEnabled, enigmaEnabled, showNotification]);
+
+  const handleEnigmaClick = useCallback(() => {
+    getActions().openEnigmaSettings();
+  }, []);
 
   function getVisibilityValue(setting?: ApiPrivacySettings) {
     if (!setting) return oldLang('Loading');
@@ -146,206 +173,168 @@ const SettingsPrivacy: FC<OwnProps & StateProps> = ({
   return (
     <div className="settings-content custom-scroll">
       <div className="settings-item pt-3">
-        <ListItem
-          icon="delete-user"
-          narrow
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(SettingsScreens.PrivacyBlockedUsers)}
+        <Button
+          isText
+          isDisabled={isRemoving}
+          onClick={onReset}
+          className="mb-1"
         >
-          {oldLang('BlockedUsers')}
-          <span className="settings-item__current-value">{blockedCount || ''}</span>
-        </ListItem>
-        {canSetPasscode && (
-          <ListItem
-            icon="key"
-            narrow
-            // eslint-disable-next-line react/jsx-no-bind
-            onClick={() => onScreenSelect(
-              hasPasscode ? SettingsScreens.PasscodeEnabled : SettingsScreens.PasscodeDisabled,
-            )}
-          >
-            <div className="multiline-item">
-              <span className="title">{oldLang('Passcode')}</span>
-              <span className="subtitle" dir="auto">
-                {oldLang(hasPasscode ? 'PasswordOn' : 'PasswordOff')}
-              </span>
-            </div>
-          </ListItem>
-        )}
-        <ListItem
-          icon="lock"
-          narrow
-          // eslint-disable-next-line react/jsx-no-bind
-          onClick={() => onScreenSelect(
-            hasPassword ? SettingsScreens.TwoFaEnabled : SettingsScreens.TwoFaDisabled,
-          )}
-        >
-          <div className="multiline-item">
-            <span className="title">{oldLang('TwoStepVerification')}</span>
-            <span className="subtitle" dir="auto">
-              {oldLang(hasPassword ? 'PasswordOn' : 'PasswordOff')}
-            </span>
-          </div>
-        </ListItem>
-        {webAuthCount > 0 && (
-          <ListItem
-            icon="web"
-            narrow
-            // eslint-disable-next-line react/jsx-no-bind
-            onClick={() => onScreenSelect(SettingsScreens.ActiveWebsites)}
-          >
-            {oldLang('PrivacySettings.WebSessions')}
-            <span className="settings-item__current-value">{webAuthCount}</span>
-          </ListItem>
-        )}
+          {lang('BackButton')}
+        </Button>
+
+        <p className="settings-item-description mb-4">{lang('PrivacySettings')}</p>
       </div>
 
       <div className="settings-item">
-        <h4 className="settings-item-header" dir={oldLang.isRtl ? 'rtl' : undefined}>{oldLang('PrivacyTitle')}</h4>
+        <h4 className="settings-item-header">{lang('Privacy')}</h4>
 
         <ListItem
-          narrow
-          className="no-icon"
-          // eslint-disable-next-line react/jsx-no-bind
+          icon="phone-outline"
           onClick={() => onScreenSelect(SettingsScreens.PrivacyPhoneNumber)}
         >
-          <div className="multiline-item">
-            <span className="title">{oldLang('PrivacyPhoneTitle')}</span>
+          <div className="multiline-menu-item">
+            {lang('PrivacyPhone')}
             <span className="subtitle" dir="auto">
               {getVisibilityValue(privacy.phoneNumber)}
             </span>
           </div>
         </ListItem>
+
         <ListItem
-          narrow
-          className="no-icon"
-          // eslint-disable-next-line react/jsx-no-bind
+          icon="lock"
+          ripple
+          onClick={handleEnigmaClick}
+        >
+          <div className="multiline-menu-item">
+            Enigma Encryption
+            <span className="subtitle" dir="auto">
+              {isEnigmaEnabled ? 'Enabled' : 'Disabled'}
+            </span>
+          </div>
+          <Switcher
+            id="enigma-toggle"
+            label="Toggle Enigma Encryption"
+            checked={Boolean(isEnigmaEnabled)}
+            inactive={false}
+          />
+        </ListItem>
+
+        <ListItem
+          icon="last-seen-outline"
           onClick={() => onScreenSelect(SettingsScreens.PrivacyLastSeen)}
         >
-          <div className="multiline-item">
-            <span className="title">{oldLang('LastSeenTitle')}</span>
+          <div className="multiline-menu-item">
+            {lang('LastSeenTitle')}
             <span className="subtitle" dir="auto">
               {getVisibilityValue(privacy.lastSeen)}
             </span>
           </div>
         </ListItem>
+
         <ListItem
-          narrow
-          className="no-icon"
-          // eslint-disable-next-line react/jsx-no-bind
+          icon="profile-outline"
           onClick={() => onScreenSelect(SettingsScreens.PrivacyProfilePhoto)}
         >
-          <div className="multiline-item">
-            <span className="title">{oldLang('PrivacyProfilePhotoTitle')}</span>
+          <div className="multiline-menu-item">
+            {lang('PrivacyProfilePhoto')}
             <span className="subtitle" dir="auto">
               {getVisibilityValue(privacy.profilePhoto)}
             </span>
           </div>
         </ListItem>
+
         <ListItem
-          narrow
-          className="no-icon"
-          // eslint-disable-next-line react/jsx-no-bind
+          icon="bio-outline"
           onClick={() => onScreenSelect(SettingsScreens.PrivacyBio)}
         >
-          <div className="multiline-item">
-            <span className="title">{oldLang('PrivacyBio')}</span>
+          <div className="multiline-menu-item">
+            {lang('PrivacyBio')}
             <span className="subtitle" dir="auto">
               {getVisibilityValue(privacy.bio)}
             </span>
           </div>
         </ListItem>
+
         <ListItem
-          narrow
-          className="no-icon"
-          // eslint-disable-next-line react/jsx-no-bind
+          icon="birthday-outline"
           onClick={() => onScreenSelect(SettingsScreens.PrivacyBirthday)}
         >
-          <div className="multiline-item">
-            <span className="title">{oldLang('PrivacyBirthday')}</span>
+          <div className="multiline-menu-item">
+            {lang('PrivacyBirthday')}
             <span className="subtitle" dir="auto">
               {getVisibilityValue(privacy.birthday)}
             </span>
           </div>
         </ListItem>
+
         <ListItem
-          narrow
-          className="no-icon"
-          // eslint-disable-next-line react/jsx-no-bind
+          icon="gift-outline"
           onClick={() => onScreenSelect(SettingsScreens.PrivacyGifts)}
         >
-          <div className="multiline-item">
-            <span className="title">{lang('PrivacyGifts')}</span>
+          <div className="multiline-menu-item">
+            {lang('PrivacyGifts')}
             <span className="subtitle" dir="auto">
               {getVisibilityValue(privacy.gifts)}
             </span>
           </div>
         </ListItem>
+
         <ListItem
-          narrow
-          className="no-icon"
-          // eslint-disable-next-line react/jsx-no-bind
+          icon="forward-outline"
           onClick={() => onScreenSelect(SettingsScreens.PrivacyForwarding)}
         >
-          <div className="multiline-item">
-            <span className="title">{oldLang('PrivacyForwardsTitle')}</span>
+          <div className="multiline-menu-item">
+            {lang('PrivacyForwards')}
             <span className="subtitle" dir="auto">
               {getVisibilityValue(privacy.forwards)}
             </span>
           </div>
         </ListItem>
+
         <ListItem
-          narrow
-          className="no-icon"
-          // eslint-disable-next-line react/jsx-no-bind
+          icon="call-outline"
           onClick={() => onScreenSelect(SettingsScreens.PrivacyPhoneCall)}
         >
-          <div className="multiline-item">
-            <span className="title">{oldLang('WhoCanCallMe')}</span>
+          <div className="multiline-menu-item">
+            {lang('WhoCanCallMe')}
             <span className="subtitle" dir="auto">
               {getVisibilityValue(privacy.phoneCall)}
             </span>
           </div>
         </ListItem>
+
         <ListItem
-          narrow
-          allowDisabledClick
-          rightElement={isCurrentUserPremium && <StarIcon size="big" type="premium" />}
-          className="no-icon"
-          // eslint-disable-next-line react/jsx-no-bind
+          icon="mic-outline"
           onClick={() => onScreenSelect(SettingsScreens.PrivacyVoiceMessages)}
         >
-          <div className="multiline-item">
-            <span className="title">{oldLang('PrivacyVoiceMessagesTitle')}</span>
+          <div className="multiline-menu-item">
+            {lang('PrivacyVoiceMessages')}
             <span className="subtitle" dir="auto">
               {getVisibilityValue(privacy.voiceMessages)}
             </span>
           </div>
         </ListItem>
+
         <ListItem
-          narrow
-          rightElement={isCurrentUserPremium && <StarIcon size="big" type="premium" />}
-          className="no-icon"
-          // eslint-disable-next-line react/jsx-no-bind
+          icon="chat-outline"
           onClick={() => onScreenSelect(SettingsScreens.PrivacyMessages)}
         >
-          <div className="multiline-item">
-            <span className="title">{oldLang('PrivacyMessagesTitle')}</span>
+          <div className="multiline-menu-item">
+            {lang('PrivacyMessages')}
             <span className="subtitle" dir="auto">
               {shouldNewNonContactPeersRequirePremium
-                ? oldLang('PrivacyMessagesContactsAndPremium')
-                : oldLang('P2PEverybody')}
+                ? lang('PrivacyMessagesContactsAndPremium')
+                : lang('P2PEverybody')}
             </span>
           </div>
         </ListItem>
+
         <ListItem
-          narrow
-          className="no-icon"
-          // eslint-disable-next-line react/jsx-no-bind
+          icon="group-outline"
           onClick={() => onScreenSelect(SettingsScreens.PrivacyGroupChats)}
         >
-          <div className="multiline-item">
-            <span className="title">{oldLang('WhoCanAddMe')}</span>
+          <div className="multiline-menu-item">
+            {lang('WhoCanAddMe')}
             <span className="subtitle" dir="auto">
               {getVisibilityValue(privacy.chatInvite)}
             </span>

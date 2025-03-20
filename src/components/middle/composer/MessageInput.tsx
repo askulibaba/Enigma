@@ -37,6 +37,7 @@ import Icon from '../../common/icons/Icon';
 import Button from '../../ui/Button';
 import TextTimer from '../../ui/TextTimer';
 import TextFormatter from './TextFormatter.async';
+import { getEnigmaUtils } from '../../../util/enigmaUtils';
 
 const CONTEXT_MENU_CLOSE_DELAY_MS = 100;
 // Focus slows down animation, also it breaks transition layout in Chrome
@@ -147,6 +148,7 @@ const MessageInput: FC<OwnProps & StateProps> = ({
     replyToNextMessage,
     showAllowedMessageTypesNotification,
     openPremiumModal,
+    openEnigmaSettings,
   } = getActions();
 
   // eslint-disable-next-line no-null/no-null
@@ -562,6 +564,24 @@ const MessageInput: FC<OwnProps & StateProps> = ({
 
   const inputScrollerContentClass = buildClassName('input-scroller-content', isNeedPremium && 'is-need-premium');
 
+  const renderEnigmaIndicator = () => {
+    const enigmaUtils = getEnigmaUtils();
+    
+    if (!enigmaUtils.isEnigmaEnabled()) {
+      return null;
+    }
+    
+    return (
+      <div 
+        className="enigma-indicator"
+        title={lang('Enigma encryption enabled')}
+        onClick={openEnigmaSettings}
+      >
+        <i className="icon-lock" />
+      </div>
+    );
+  };
+
   return (
     <div id={id} onClick={shouldSuppressFocus ? onSuppressedFocus : undefined} dir={lang.isRtl ? 'rtl' : undefined}>
       <div
@@ -612,6 +632,7 @@ const MessageInput: FC<OwnProps & StateProps> = ({
           <canvas ref={sharedCanvasRef} className="shared-canvas" />
           <canvas ref={sharedCanvasHqRef} className="shared-canvas" />
           <div ref={absoluteContainerRef} className="absolute-video-container" />
+          {renderEnigmaIndicator()}
         </div>
       </div>
       <div

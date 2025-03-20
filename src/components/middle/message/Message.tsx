@@ -189,6 +189,9 @@ import Video from './Video';
 import WebPage from './WebPage';
 
 import './Message.scss';
+import PremiumIcon from '../../common/PremiumIcon';
+import Widget from '../../common/Widget';
+import enigmaEncryption from '../../../lib/enigma/EnigmaEncryption';
 
 type MessagePositionProperties = {
   isFirstInGroup: boolean;
@@ -222,85 +225,60 @@ type OwnProps =
 
 type StateProps = {
   theme: ISettings['theme'];
-  forceSenderName?: boolean;
-  sender?: ApiPeer;
-  canShowSender: boolean;
-  originSender?: ApiPeer;
-  botSender?: ApiUser;
-  isThreadTop?: boolean;
-  shouldHideReply?: boolean;
-  replyMessage?: ApiMessage;
-  replyMessageSender?: ApiPeer;
-  replyMessageForwardSender?: ApiPeer;
-  replyMessageChat?: ApiChat;
-  isReplyPrivate?: boolean;
-  replyStory?: ApiTypeStory;
-  storySender?: ApiPeer;
-  outgoingStatus?: ApiMessageOutgoingStatus;
-  uploadProgress?: number;
-  isInDocumentGroup: boolean;
-  isProtected?: boolean;
-  isChatProtected?: boolean;
-  isFocused?: boolean;
-  focusDirection?: FocusDirection;
-  focusedQuote?: string;
-  noFocusHighlight?: boolean;
-  scrollTargetPosition?: ScrollTargetPosition;
-  isResizingContainer?: boolean;
-  isForwarding?: boolean;
-  isChatWithSelf?: boolean;
+  chatUsernames?: ApiChat['usernames'];
+  originChannelId?: string;
+  threadTopMessageId?: number;
+  hasLinkedChat?: boolean;
+  isInCurrentThread?: boolean;
+  isCurrentUserPremium?: boolean;
   isRepliesChat?: boolean;
-  isAnonymousForwards?: boolean;
   isChannel?: boolean;
   isGroup?: boolean;
-  canReply?: boolean;
-  highlight?: string;
-  animatedEmoji?: string;
-  animatedCustomEmoji?: string;
-  hasActiveReactions?: boolean;
-  isInSelectMode?: boolean;
-  isSelected?: boolean;
-  isGroupSelected?: boolean;
-  isDownloading?: boolean;
-  threadId?: ThreadId;
+  canPostInChat?: boolean;
+  isChatWithSelf?: boolean;
+  isForwarding?: boolean;
+  isEditing?: boolean;
   isPinnedList?: boolean;
   isPinned?: boolean;
-  canAutoLoadMedia?: boolean;
-  canAutoPlayMedia?: boolean;
-  hasLinkedChat?: boolean;
+  shouldAutoLoadMedia?: boolean;
+  shouldAutoPlayMedia?: boolean;
+  shouldAutoPlayVideos?: boolean;
   shouldLoopStickers?: boolean;
   autoLoadFileMaxSizeMb: number;
-  repliesThreadInfo?: ApiThreadInfo;
-  reactionMessage?: ApiMessage;
-  availableReactions?: ApiAvailableReaction[];
-  defaultReaction?: ApiReaction;
-  activeEmojiInteractions?: ActiveEmojiInteraction[];
-  hasUnreadReaction?: boolean;
-  isTranscribing?: boolean;
-  transcribedText?: string;
-  isTranscriptionError?: boolean;
-  isPremium: boolean;
-  senderAdminMember?: ApiChatMember;
+  isSingleEmoji?: boolean;
+  animationLevel: 0 | 1 | 2;
+  messageTextSize: number;
+  chatWidth?: number;
+  chatHeight?: number;
+  replyingToId?: number;
+  isSelectModeActive?: boolean;
+  isSelected?: boolean;
+  isGroupSelected?: boolean;
+  threadId?: number;
+  serverTimeOffset: number;
+  user?: ApiUser;
+  isDownloading: boolean;
+  isPremiumPurchaseBlocked?: boolean;
+  chat?: ApiChat;
+  reactors?: Record<string, ApiMessageReactions>;
+  topMessageReactors?: Record<string, ApiMessageReactions>;
+  senderUser?: ApiUser;
+  senderBot?: ApiBot;
+  senderChat?: ApiChat;
+  reactionMessage?: ReactorByEmoji;
   messageTopic?: ApiTopic;
-  hasTopicChip?: boolean;
+  canShowReactionsCount?: boolean;
+  canShowReactionList?: boolean;
   chatTranslations?: ChatTranslatedMessages;
-  areTranslationsEnabled?: boolean;
   shouldDetectChatLanguage?: boolean;
-  requestedTranslationLanguage?: string;
-  requestedChatTranslationLanguage?: string;
-  withAnimatedEffects?: boolean;
-  webPageStory?: ApiTypeStory;
-  isConnected: boolean;
-  isLoadingComments?: boolean;
-  shouldWarnAboutSvg?: boolean;
-  senderBoosts?: number;
-  tags?: Record<ApiReactionKey, ApiSavedReactionTag>;
-  canTranscribeVoice?: boolean;
-  viaBusinessBot?: ApiUser;
-  effect?: ApiAvailableEffect;
-  poll?: ApiPoll;
-  maxTimestamp?: number;
-  lastPlaybackTimestamp?: number;
+  withTranslucentThumbs?: boolean;
+  isChatTranslated?: boolean;
+  translatedLanguageCode?: string;
+  attachmentMenuBots?: ApiAttachBot[];
+  quickReactionEmoji?: string;
+  chatId: string;
+  enigmaEnabled?: boolean;
+  enigmaKey?: string;
 };
 
 type MetaPosition =
@@ -1844,93 +1822,67 @@ export default memo(withGlobal<OwnProps>(
 
     return {
       theme: selectTheme(global),
-      forceSenderName,
-      sender,
-      canShowSender,
-      originSender,
-      botSender,
-      shouldHideReply: shouldHideReply || isReplyToTopicStart,
-      isThreadTop,
-      replyMessage,
-      replyMessageSender,
-      replyMessageForwardSender,
-      replyMessageChat,
-      replyStory,
-      isReplyPrivate,
-      storySender,
-      isInDocumentGroup,
-      isProtected: selectIsMessageProtected(global, message),
-      isChatProtected: selectIsChatProtected(global, chatId),
-      isFocused,
-      isForwarding,
-      reactionMessage,
-      isChatWithSelf,
-      isRepliesChat: isSystemBotChat,
-      isAnonymousForwards,
+      chatUsernames: chat?.usernames,
+      originChannelId: message.forwardInfo?.fromChatId,
+      threadTopMessageId: threadInfo?.topMessageId,
+      isInCurrentThread: threadId === currentThreadId || message.threadInfo?.isCommentsInfo,
+      hasLinkedChat: Boolean(chat?.fullInfo?.linkedChatId),
+      isCurrentUserPremium: isUserPremium(global, currentUserId!),
+      isRepliesChat: isChatWithRepliesBotRestricted(chat),
       isChannel,
       isGroup,
-      canReply,
-      highlight,
-      animatedEmoji,
-      animatedCustomEmoji,
-      isInSelectMode: selectIsInSelectMode(global),
+      canPostInChat: chat && getCanPostInChat(chat, threadId, hasCurrentUserRestrictions(global, chat.id)),
+      isChatWithSelf,
+      isForwarding,
+      isEditing: isMessageEditing(global, chatId, message),
+      isPinnedList: tabState.messageLists.active?.type === 'pinned',
+      isPinned,
+      shouldAutoLoadMedia: shouldAutoLoad(
+        undefined, message.content?.size, message.content?.isGlobal, user, chat, autoLoadFileMaxSizeMb,
+      ),
+      shouldAutoPlayMedia: Boolean(autoplayMedia(global.settings.byKey)),
+      shouldAutoPlayVideos: isAutoPlayVideosEnabled(global.settings.byKey),
+      shouldLoopStickers,
+      autoLoadFileMaxSizeMb,
+      isSingleEmoji: !isPreRenderedMessage
+        && selectIsSingleEmoji(message, global.customEmojis),
+      animationLevel,
+      messageTextSize,
+      chatWidth: chatIsPinned ? tabState.width : undefined,
+      chatHeight: chatIsPinned ? tabState.height : undefined,
+      replyingToId: tabState.replyingToId,
+      isSelectModeActive,
       isSelected,
       isGroupSelected: (
-        Boolean(message.groupedId)
+        message.groupedId
         && !message.isInAlbum
         && selectIsDocumentGroupSelected(global, chatId, message.groupedId)
       ),
       threadId,
-      isDownloading,
-      isPinnedList: messageListType === 'pinned',
-      isPinned,
-      canAutoLoadMedia: selectCanAutoLoadMedia(global, message),
-      canAutoPlayMedia: selectCanAutoPlayMedia(global, message),
-      autoLoadFileMaxSizeMb: global.settings.byKey.autoLoadFileMaxSizeMb,
-      shouldLoopStickers: selectShouldLoopStickers(global),
-      repliesThreadInfo,
-      availableReactions: global.reactions.availableReactions,
-      defaultReaction: isMessageLocal(message) || messageListType === 'scheduled'
-        ? undefined : selectDefaultReaction(global, chatId),
-      hasActiveReactions,
-      activeEmojiInteractions,
-      hasUnreadReaction,
-      isTranscribing: transcriptionId !== undefined && global.transcriptions[transcriptionId]?.isPending,
-      transcribedText: transcriptionId !== undefined ? global.transcriptions[transcriptionId]?.text : undefined,
-      isPremium,
-      senderAdminMember,
-      messageTopic,
-      hasTopicChip,
-      chatTranslations,
-      areTranslationsEnabled,
-      shouldDetectChatLanguage: selectShouldDetectChatLanguage(global, chatId),
-      requestedTranslationLanguage,
-      requestedChatTranslationLanguage,
-      hasLinkedChat: Boolean(chatFullInfo?.linkedChatId),
-      withAnimatedEffects: selectPerformanceSettingsValue(global, 'stickerEffects'),
-      webPageStory,
-      isConnected,
-      isLoadingComments: repliesThreadInfo?.isCommentsInfo
-        && loadingThread?.loadingChatId === repliesThreadInfo?.originChannelId
-        && loadingThread?.loadingMessageId === repliesThreadInfo?.originMessageId,
-      shouldWarnAboutSvg: global.settings.byKey.shouldWarnAboutSvg,
-      ...(isOutgoing && { outgoingStatus: selectOutgoingStatus(global, message, messageListType === 'scheduled') }),
-      ...(typeof uploadProgress === 'number' && { uploadProgress }),
-      ...(isFocused && {
-        focusDirection,
-        noFocusHighlight,
-        isResizingContainer,
-        focusedQuote,
-        scrollTargetPosition,
-      }),
-      senderBoosts,
-      tags: global.savedReactionTags?.byKey,
-      canTranscribeVoice,
-      viaBusinessBot,
-      effect,
-      poll,
-      maxTimestamp,
-      lastPlaybackTimestamp,
+      serverTimeOffset: global.serverTimeOffset,
+      user,
+      isDownloading: isDownloading(global, message),
+      isPremiumPurchaseBlocked: global.premiumModal?.isPurchaseBlocked,
+      chat,
+      reactors: isOverlayOpen ? global.reactors.messageByChatId[chatId]?.[message.id] : undefined,
+      topMessageReactors: global.reactors.topReactions?.reaction ? global.reactors.topReactions?.byChatId[chatId] : undefined,
+      senderUser,
+      senderBot: isBot ? selectBot(global, senderPeerId) : undefined,
+      senderChat,
+      reactionMessage: global.reactionMessage?.byChatId[chatId]?.[message.id]?.reaction,
+      messageTopic: chat?.topics?.[message.repliesThreadInfo?.threadId!],
+      canShowReactionsCount: areReactionsVisible,
+      canShowReactionList: areReactionsVisible,
+      chatTranslations: chatTranslations.byChatId[chatId],
+      shouldDetectChatLanguage: Boolean(selectShouldTranslateChat(global, chatId)),
+      withTranslucentThumbs: Boolean(global.settings.byKey.shouldReduceMotion),
+      isChatTranslated: Boolean(chatTranslations.byChatId[chatId]?.isPending),
+      translatedLanguageCode: global.settings.byKey.translationLanguage,
+      attachmentMenuBots: global.attachmentSettings.bots,
+      quickReactionEmoji: reactionSettings.quickReaction,
+      chatId,
+      enigmaEnabled: settings.byKey.enigmaEnabled,
+      enigmaKey: settings.byKey.enigmaKey,
     };
   },
 )(Message));

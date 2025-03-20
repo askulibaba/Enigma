@@ -126,6 +126,22 @@ addActionHandler('setSettingOption', (global, actions, payload): ActionReturnTyp
   return replaceSettings(global, payload);
 });
 
+addActionHandler('toggleEnigmaEnabled', (global, actions, payload): ActionReturnType => {
+  const { enabled } = payload;
+  
+  return replaceSettings(global, {
+    enigmaEnabled: enabled,
+  });
+});
+
+addActionHandler('setEnigmaKey', (global, actions, payload): ActionReturnType => {
+  const { key } = payload;
+  
+  return replaceSettings(global, {
+    enigmaKey: key,
+  });
+});
+
 addActionHandler('updatePerformanceSettings', (global, actions, payload): ActionReturnType => {
   global = {
     ...global,
@@ -203,3 +219,27 @@ addActionHandler('closeShareChatFolderModal', (global, actions, payload): Action
     shareFolderScreen: undefined,
   }, tabId);
 });
+
+export function openPrivacySettings() {
+  setGlobal({
+    ...getGlobal(),
+    settings: {
+      ...getGlobal().settings,
+      byKey: true,
+    },
+  });
+
+  openSettings({ contentKey: SettingsScreens.Privacy });
+}
+
+export function openEnigmaSettings() {
+  setGlobal({
+    ...getGlobal(),
+    settings: {
+      ...getGlobal().settings,
+      byKey: true,
+    },
+  });
+
+  openSettings({ contentKey: SettingsScreens.Enigma });
+}

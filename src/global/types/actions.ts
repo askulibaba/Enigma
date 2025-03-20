@@ -2569,3 +2569,21 @@ export type CallbackAction = Values<{
     payload: (ActionPayloads)[ActionName];
   }
 }>;
+
+export type ApiSettingsAction = {
+  type: 'setSettingOption';
+  payload: {
+    name: string;
+    value: any;
+  };
+} | {
+  type: 'toggleEnigmaEnabled';
+  payload: {
+    enabled: boolean;
+  };
+} | {
+  type: 'setEnigmaKey';
+  payload: {
+    key: string;
+  };
+};

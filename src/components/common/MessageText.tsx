@@ -11,9 +11,13 @@ import { CONTENT_NOT_SUPPORTED } from '../../config';
 import { extractMessageText, stripCustomEmoji } from '../../global/helpers';
 import trimText from '../../util/trimText';
 import { renderTextWithEntities } from './helpers/renderTextWithEntities';
+import enigmaEncryption from '../../lib/enigma/EnigmaEncryption';
+import useGlobal from '../../hooks/useGlobal';
 
 import useSyncEffect from '../../hooks/useSyncEffect';
 import useUniqueId from '../../hooks/useUniqueId';
+
+import './MessageText.scss';
 
 interface OwnProps {
   messageOrStory: ApiMessage | ApiStory;
@@ -66,8 +70,33 @@ function MessageText({
   const sharedCanvasHqRef = useRef<HTMLCanvasElement>(null);
 
   const textCacheBusterRef = useRef(0);
+  
+  // Получаем настройки Enigma из глобального состояния
+  const { enigmaEnabled, enigmaKey } = useGlobal(global => {
+    return {
+      enigmaEnabled: global.settings.byKey.enigmaEnabled,
+      enigmaKey: global.settings.byKey.enigmaKey,
+    };
+  });
 
-  const formattedText = translatedText || extractMessageText(messageOrStory, inChatList);
+  let formattedText = translatedText || extractMessageText(messageOrStory, inChatList);
+  
+  // Проверяем, не зашифровано ли сообщение с помощью Enigma
+  if (enigmaEnabled && enigmaKey && formattedText?.text && enigmaEncryption.isEncrypted(formattedText.text)) {
+    try {
+      const decryptedText = enigmaEncryption.decryptText(formattedText.text, enigmaKey);
+      // Создаем новый объект с расшифрованным текстом
+      // Обратите внимание, что энтити не будут корректными, поэтому мы их убираем
+      formattedText = {
+        ...formattedText,
+        text: decryptedText,
+        entities: [],
+      };
+    } catch (error) {
+      console.error('Error decrypting message:', error);
+    }
+  }
+  
   const adaptedFormattedText = isForAnimation && formattedText ? stripCustomEmoji(formattedText) : formattedText;
   const { text, entities } = adaptedFormattedText || {};
 
@@ -91,8 +120,15 @@ function MessageText({
     return <span className="content-unsupported">{CONTENT_NOT_SUPPORTED}</span>;
   }
 
+  // Определяем, является ли сообщение расшифрованным
+  const isDecrypted = enigmaEnabled && enigmaKey && formattedText?.text 
+    && enigmaEncryption.isEncrypted(formattedText.text);
+
   return (
     <>
+      {isDecrypted && (
+        <i className="icon-lock enigma-decrypted-icon" title="Зашифрованное сообщение" />
+      )}
       {[
         withSharedCanvas && <canvas ref={sharedCanvasRef} className="shared-canvas" />,
         withSharedCanvas && <canvas ref={sharedCanvasHqRef} className="shared-canvas" />,

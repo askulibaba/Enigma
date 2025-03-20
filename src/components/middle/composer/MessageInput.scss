@@ -1,0 +1,22 @@
+.enigma-indicator {
+  position: absolute;
+  right: 3.5rem;
+  bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  cursor: pointer;
+  color: var(--color-primary);
+  opacity: 0.8;
+  transition: opacity 0.15s ease;
+  
+  &:hover {
+    opacity: 1;
+  }
+  
+  i {
+    font-size: 1.25rem;
+  }
+} 

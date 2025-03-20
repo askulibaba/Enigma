@@ -145,6 +145,7 @@ import {
   selectViewportIds,
 } from '../../selectors';
 import { deleteMessages } from '../apiUpdaters/messages';
+import { getEnigmaUtils } from '../../../util/enigmaUtils';
 
 const AUTOLOGIN_TOKEN_KEY = 'autologin_token';
 
@@ -1562,7 +1563,30 @@ async function sendMessage<T extends GlobalState>(global: T, params: {
     await rafPromise();
   }
 
-  await callApi('sendMessage', params, progressCallback);
+  // Применяем шифрование, если оно включено
+  const global = getGlobal();
+  const enigmaUtils = getEnigmaUtils();
+  const isEnigmaEnabled = enigmaUtils.isEnigmaEnabled();
+  const enigmaKey = global.settings.privacy?.enigmaKey || '';
+  
+  let processedText = params.text;
+  
+  if (isEnigmaEnabled && enigmaKey) {
+    if (typeof processedText === 'string') {
+      processedText = await enigmaUtils.encryptMessage(processedText, enigmaKey);
+    } else if (processedText.text) {
+      const encryptedText = await enigmaUtils.encryptMessage(processedText.text, enigmaKey);
+      processedText = {
+        ...processedText,
+        text: encryptedText,
+      };
+    }
+  }
+
+  await callApi('sendMessage', {
+    ...params,
+    text: processedText,
+  }, progressCallback);
 
   if (progressCallback && currentMessageKey) {
     global = getGlobal();
